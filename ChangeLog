@@ -2,6 +2,18 @@ RELEASE VERSION HISTORY (newest to oldest)
 ------------------------------------------
 
 
+5.20.2    03-21-2012
+--------------------
+
+radlib version required: 2.12.0 or newer
+
+1)  Added back "dailyrainin" for http reporting. They do no computation based on hourly rain values.
+
+2)  Fixed a typo in the wviewmgmt station.php file. 
+
+
+
+
 5.20.1    03-20-2012
 --------------------
 

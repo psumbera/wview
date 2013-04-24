@@ -157,6 +157,7 @@ typedef struct
     float           sampleRain;
     float           rainHour;
     float           rainDay;
+    float           rainToday;
     int             dewpoint;
     float           UV;
     float           radiation;

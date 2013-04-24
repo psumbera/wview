@@ -156,7 +156,9 @@ static void processWUNDERGROUND (WVIEW_MSG_ARCHIVE_NOTIFY *notify)
     
     length += sprintf (&httpBuffer[length], "&rainin=%.2f", notify->rainHour);
     
-    length += sprintf (&httpBuffer[length], "&baromin=%2.2d.%2.2d", 
+    length += sprintf (&httpBuffer[length], "&dailyrainin=%.2f", notify->rainToday);
+
+    length += sprintf (&httpBuffer[length], "&baromin=%2.2d.%2.2d",
                        notify->barom/1000, (notify->barom%1000)/10);
 
     length += sprintf (&httpBuffer[length], "&dewptf=%2.2d.%3.3d", 
@@ -283,7 +285,9 @@ static void processWEATHERFORYOU (WVIEW_MSG_ARCHIVE_NOTIFY *notify)
     
     length += sprintf (&httpBuffer[length], "&rainin=%.2f", notify->rainHour);
     
-    length += sprintf (&httpBuffer[length], "&baromin=%2.2d.%2.2d", 
+    length += sprintf (&httpBuffer[length], "&dailyrainin=%.2f", notify->rainToday);
+
+    length += sprintf (&httpBuffer[length], "&baromin=%2.2d.%2.2d",
                        notify->barom/1000, (notify->barom%1000)/10);
 
     length += sprintf (&httpBuffer[length], "&dewptf=%d.%d", 

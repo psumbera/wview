@@ -140,6 +140,9 @@ int stationSendArchiveNotifications (WVIEWD_WORK *work, float sampleRain)
         notify.rainDay = store.values[DATA_INDEX_rain];
     }
 
+    notify.rainToday = sensorGetCumulative (&work->sensors.sensor[STF_DAY][SENSOR_RAIN]);
+
+
     if (radMsgRouterMessageSend (WVIEW_MSG_TYPE_ARCHIVE_NOTIFY, &notify, sizeof(notify))
         == ERROR)
     {

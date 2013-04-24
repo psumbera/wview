@@ -446,7 +446,7 @@
                      strcmp($field_Station_Type, "Oregon Scientific WMRUSB") &&
                      strcmp($field_Station_Type, "Fine Offset WH1080") &&
                      strcmp($field_Station_Type, "Honeywell TE923") &&
-                     !strcmp($field_Station_Interface == "ethernet"))
+                     !strcmp($field_Station_Interface, "ethernet"))
                     echo $EMPTY; 
                 else 
                     echo $NONE;
