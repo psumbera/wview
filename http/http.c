@@ -123,7 +123,6 @@ static void processWUNDERGROUND (WVIEW_MSG_ARCHIVE_NOTIFY *notify)
     char                *serv;
     int                 port;
     char                version[64];
-    float               rainIN = sensorAccumGetTotal (httpWork.rainAccumulator);
     
     // format the WUNDERGROUND data
     ntime = time (NULL);
@@ -155,16 +154,19 @@ static void processWUNDERGROUND (WVIEW_MSG_ARCHIVE_NOTIFY *notify)
     length += sprintf (&httpBuffer[length], "&tempf=%3.3d.%1.1d", 
                        notify->temp/10, notify->temp%10);
     
-    length += sprintf (&httpBuffer[length], "&rainin=%.2f", rainIN);
+    length += sprintf (&httpBuffer[length], "&rainin=%.2f", notify->rainHour);
     
-    length += sprintf (&httpBuffer[length], "&dailyrainin=%.2f", 
-                       ((float)notify->rainDay)/100);
-
     length += sprintf (&httpBuffer[length], "&baromin=%2.2d.%2.2d", 
                        notify->barom/1000, (notify->barom%1000)/10);
 
     length += sprintf (&httpBuffer[length], "&dewptf=%2.2d.%3.3d", 
                        notify->dewpoint/10, (notify->dewpoint%10)*100);
+
+    if (notify->radiation != 0xFFFF)
+        length += sprintf (&httpBuffer[length], "&solarradiation=%d", (int)notify->radiation);
+
+    if (notify->UV >= 0 && notify->UV < 20)
+        length += sprintf (&httpBuffer[length], "&UV=%.1f", notify->UV);
 
     strcpy (version, globalWviewVersionStr);
     version[5] = '-';
@@ -253,12 +255,11 @@ static void processWEATHERFORYOU (WVIEW_MSG_ARCHIVE_NOTIFY *notify)
     CURLcode            res;
     char                curlError[CURL_ERROR_SIZE];
     char                tempBfr[194];
-    float               rainIN = sensorAccumGetTotal (httpWork.rainAccumulator);
     
     // format the WEATHERFORYOU data
     ntime = time (NULL);
     gmtime_r (&ntime, &gmTime);
-    length = sprintf (httpBuffer, "http://www.hamweather.net/weatherstations/pwsupdate.php?");
+    length = sprintf (httpBuffer, "http://www.pwsweather.com/pwsupdate/pwsupdate.php?");
     length += sprintf (&httpBuffer[length], "ID=%s&PASSWORD=%s",
                        httpWork.youstationId, httpWork.youpassword);
 
@@ -280,11 +281,8 @@ static void processWEATHERFORYOU (WVIEW_MSG_ARCHIVE_NOTIFY *notify)
     length += sprintf (&httpBuffer[length], "&tempf=%d.%d", 
                        notify->temp/10, notify->temp%10);
     
-    length += sprintf (&httpBuffer[length], "&rainin=%.2f", rainIN);
+    length += sprintf (&httpBuffer[length], "&rainin=%.2f", notify->rainHour);
     
-    length += sprintf (&httpBuffer[length], "&dailyrainin=%.2f", 
-                       ((float)notify->rainDay)/100);
-
     length += sprintf (&httpBuffer[length], "&baromin=%2.2d.%2.2d", 
                        notify->barom/1000, (notify->barom%1000)/10);
 
@@ -295,6 +293,12 @@ static void processWEATHERFORYOU (WVIEW_MSG_ARCHIVE_NOTIFY *notify)
     {
         length += sprintf (&httpBuffer[length], "&humidity=%d", notify->humidity);
     }
+
+    if (notify->radiation != 0xFFFF)
+        length += sprintf (&httpBuffer[length], "&solarradiation=%d", (int)notify->radiation);
+
+    if (notify->UV >= 0 && notify->UV < 20)
+        length += sprintf (&httpBuffer[length], "&UV=%.1f", notify->UV);
 
     strcpy (version, globalWviewVersionStr);
     version[5] = '-';
@@ -542,9 +546,6 @@ static void msgHandler
     switch (msgType) {
       case WVIEW_MSG_TYPE_ARCHIVE_NOTIFY: {
         anMsg = (WVIEW_MSG_ARCHIVE_NOTIFY *)msg;
-
-        // Update the rain accumulator
-        sensorAccumAddSample (httpWork.rainAccumulator, nowTime, anMsg->sampleRain);
 
         // process http data transfer
         if (strcmp (httpWork.stationId, "0"))
@@ -881,18 +882,6 @@ int main (int argc, char *argv[])
         exit (1);
     }
 
-    // Create the rain accumulator
-    httpWork.rainAccumulator = sensorAccumInit(60);
-
-    // Populate the accumulator
-    timeStamp = dbsqliteArchiveGetNextRecord(nowTime, &recordStore);
-    while (timeStamp != ERROR)
-    {
-        tempRain = (float)recordStore.value[DATA_INDEX_rain];
-        sensorAccumAddSample (httpWork.rainAccumulator, timeStamp, tempRain);
-        timeStamp = dbsqliteArchiveGetNextRecord(timeStamp, &recordStore);
-    }
-
     // enable message reception from the radlib router for archive notifications
     radMsgRouterMessageRegister (WVIEW_MSG_TYPE_ARCHIVE_NOTIFY);
 
@@ -924,7 +913,6 @@ int main (int argc, char *argv[])
     radMsgLog (PRI_STATUS, "exiting normally...");
     statusUpdate(STATUS_SHUTDOWN);
 
-    sensorAccumExit (httpWork.rainAccumulator);
     radMsgRouterExit ();
     dbsqliteArchiveExit();
     httpSysExit (&httpWork);

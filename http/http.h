@@ -88,7 +88,6 @@ typedef struct
     int             wuRapidFire;
     char            youstationId[128];
     char            youpassword[64];
-    WV_ACCUM_ID     rainAccumulator;
     int             inMainLoop;
     int             exiting;
 } WVIEW_HTTPD_WORK;
