@@ -607,14 +607,14 @@ static void readDataDirect (WVIEWD_WORK *work)
     }
 
     // Read on the USB interface:
-    while (wmrWork.readIndex < WMR_BUFFER_LENGTH)
+    while (wmrWork.readIndex + 7 < WMR_BUFFER_LENGTH)
     {
         retVal = (*(work->medium.usbhidRead))(&work->medium, buf, 8, 250);
         if (retVal == 8)
         {
             // first octet is a length field:
             length = buf[0]; 
-            if ((length < 8) && ((wmrWork.readIndex + length) < WMR_BUFFER_LENGTH))
+            if (length < 8)
             {
                 memcpy(&wmrWork.readData[wmrWork.readIndex], buf+1, length);
                 wmrWork.readIndex += length;
@@ -760,14 +760,14 @@ static void ReaderThread(RAD_THREAD_ID threadId, void* threadData)
             // Read on the USB interface:
             msg.length = 0;
             sendMsgFlag = FALSE;
-            while ((! sendMsgFlag) && (msg.length < WMR_BUFFER_LENGTH))
+            while ((! sendMsgFlag) && (msg.length + 7 < WMR_BUFFER_LENGTH))
             {
                 retVal = (*(work->medium.usbhidRead))(&work->medium, buf, 8, 50);
                 if (retVal == 8)
                 {
                     // first octet is a length field:
                     length = buf[0]; 
-                    if ((length < 8) && ((msg.length + length) < WMR_BUFFER_LENGTH))
+                    if (length < 8)
                     {
                         memcpy(&msg.data[msg.length], buf+1, length);
                         msg.length += length;
