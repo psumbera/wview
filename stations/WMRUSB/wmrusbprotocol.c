@@ -958,7 +958,8 @@ void wmrProcessData (WVIEWD_WORK *work)
             else if (pktLength <= wmrWork.readIndex)
             {
                 // We have a completion, process it:
-                parseStationData(work);
+                if (checksum(&wmrWork.readData[2], pktLength-2))
+                    parseStationData(work);
     
                 // Delete it:
                 shiftUpReadBuffer(pktLength);
