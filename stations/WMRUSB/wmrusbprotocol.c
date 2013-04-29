@@ -690,8 +690,14 @@ static void ReaderThread(RAD_THREAD_ID threadId, void* threadData)
     WMRUSB_MSG_DATA     msg;
     uint8_t             buf[8];
     WVIEWD_WORK*        work = (WVIEWD_WORK*)threadData;
+    sigset_t            signal_mask;
 
     radMsgLog (PRI_STATUS, "wmr: read thread started...");
+
+    // Avoid signal from timer to woke reader thread
+    sigemptyset (&signal_mask);
+    sigaddset (&signal_mask, SIGALRM);
+    pthread_sigmask (SIG_BLOCK, &signal_mask, NULL);
 
     // Initialize the USB interface:
     if ((*(work->medium.usbhidInit))(&work->medium) != OK)
