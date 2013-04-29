@@ -916,7 +916,7 @@ void wmrProcessData (WVIEWD_WORK *work)
     int     pktLength, index = 0;
 
     // First, hunt for a packet start sequence (0xFFFF or 0xD2-0xD9):
-    while ((index < wmrWork.readIndex - 1) && !IsPacketStart(&wmrWork.readData[index]))
+    while ((index < wmrWork.readIndex - 2) && !IsPacketStart(&wmrWork.readData[index]))
     {
         index ++;
     }
@@ -924,15 +924,6 @@ void wmrProcessData (WVIEWD_WORK *work)
     // Do we need to toss junk at the front of the buffer?
     if (index > 0)
     {
-        // Are we FFFF protocol and at the last octet and is it 0xFF?
-        if ((wmrWork.protocol == WMR_PROTOCOL_FFFF) &&
-            (index == (wmrWork.readIndex - 1)) && 
-            (wmrWork.readData[index] == 0xFF))
-        {
-            // Yes, save it:
-            index --;
-        }
-
         // Lose the rubbish:
         shiftUpReadBuffer(index);
     }
