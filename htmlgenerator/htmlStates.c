@@ -45,6 +45,19 @@
 /*  ... static (local) memory declarations
 */
 
+#if ! defined(HAVE_TM_GMTOFF)
+static long gmtoffset()
+{
+    time_t t1, t2;
+    struct tm tm;
+
+    t1 = time(0);
+    tm = *gmtime(&t1);
+    t2 = mktime(&tm);
+    return (long) difftime(t1,t2);
+}
+#endif
+
 static void processNewArchiveRecord (HTML_WORK *work, WVIEW_MSG_ARCHIVE_NOTIFY *armsg)
 {
     HISTORY_DATA        data;
@@ -73,7 +86,11 @@ static void processNewArchiveRecord (HTML_WORK *work, WVIEW_MSG_ARCHIVE_NOTIFY *
         currMonth   = locTime.tm_mon + 1;
         currYear    = locTime.tm_year + 1900;
 
+#ifdef HAVE_TM_GMTOFF
         gmtOffsetHours = locTime.tm_gmtoff/(60.0*60.0);
+#else
+        gmtOffsetHours = gmtoffset()/(60.0*60.0);
+#endif
 
         //  ... update the sun times:
         sunTimesGetSunRiseSet (currYear, currMonth, currDay,
@@ -256,7 +273,11 @@ static void processNewArchiveRecord (HTML_WORK *work, WVIEW_MSG_ARCHIVE_NOTIFY *
         locTime.tm_mon   = currMonth - 1;
         locTime.tm_year  = currYear - 1900;
         locTime.tm_isdst = -1;
-		gmtOffsetHours = locTime.tm_gmtoff/(60.0*60.0);
+#ifdef HAVE_TM_GMTOFF
+        gmtOffsetHours = locTime.tm_gmtoff/(60.0*60.0);
+#else   
+        gmtOffsetHours = gmtoffset()/(60.0*60.0);
+#endif
 
         ntime = mktime (&locTime);
         ntime -= WV_SECONDS_IN_DAY;
@@ -412,7 +433,11 @@ int htmlStationInfoState (int state, void *stimulus, void *data)
     currDay     = locTime.tm_mday;
     currMonth   = locTime.tm_mon + 1;
     currYear    = locTime.tm_year + 1900;
+#ifdef HAVE_TM_GMTOFF
     gmtOffsetHours = locTime.tm_gmtoff/(60.0*60.0);
+#else
+    gmtOffsetHours = gmtoffset()/(60.0*60.0);    
+#endif
 
     switch (stim->type)
     {
