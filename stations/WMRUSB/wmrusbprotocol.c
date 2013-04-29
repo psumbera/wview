@@ -760,7 +760,7 @@ static void ReaderThread(RAD_THREAD_ID threadId, void* threadData)
             // Read on the USB interface:
             msg.length = 0;
             sendMsgFlag = FALSE;
-            while ((! sendMsgFlag) && (msg.length + 7 < WMR_BUFFER_LENGTH))
+            while ((! sendMsgFlag) && (msg.length + 7 < WMR_BUFFER_LENGTH) && !radthreadShouldExit(threadId))
             {
                 retVal = (*(work->medium.usbhidRead))(&work->medium, buf, 8, 50);
                 if (retVal == 8)
