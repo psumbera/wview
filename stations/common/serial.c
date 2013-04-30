@@ -84,7 +84,13 @@ static int serialInit (WVIEW_MEDIUM *med, char *deviceName)
         return ERROR;
     }
 
+#ifdef HAVE_FLOCK
     if (flock (med->fd, LOCK_EX) < 0)
+#else
+    struct flock lock = {0};
+    lock.l_type = F_WRLCK;
+    if (fcntl(med->fd, F_SETLKW, &lock) < 0)
+#endif
     {
         if (errno == EOPNOTSUPP)
         {
