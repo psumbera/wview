@@ -52,15 +52,26 @@ wviewd_te923_SOURCES     = \
 
 
 if DARWIN
-wviewd_te923_SOURCES	+= $(top_srcdir)/stations/common/hidapi-osx.c
-wviewd_te923_LDFLAGS	= -L$(prefix)/lib -L/usr/lib -L/usr/local/lib -framework IOKit -framework CoreFoundation
-wviewd_te923_LDADD	=
-else
-wviewd_te923_SOURCES	+= $(top_srcdir)/stations/common/hidapi-linux.c
-wviewd_te923_LDFLAGS	= -L$(prefix)/lib -L/usr/lib -L/usr/local/lib
+wviewd_te923_SOURCES   += $(top_srcdir)/stations/common/hidapi-osx.c
+wviewd_te923_LDFLAGS   = -L$(prefix)/lib -L/usr/lib -L/usr/local/lib -framework IOKit -framework CoreFoundation
+wviewd_te923_LDADD     =
+endif
+
 if FREEBSD
-wviewd_te923_LDADD		= -lusb
-else
-wviewd_te923_LDADD		= -lusb-1.0
+wviewd_te923_SOURCES   += $(top_srcdir)/stations/common/hidapi-linux.c
+wviewd_te923_LDFLAGS   = -L$(prefix)/lib -L/usr/lib -L/usr/local/lib
+wviewd_te923_LDADD     = -lusb
 endif
+
+if LINUX
+wviewd_te923_SOURCES   += $(top_srcdir)/stations/common/hidapi-linux.c
+wviewd_te923_LDFLAGS   = -L$(prefix)/lib -L/usr/lib -L/usr/local/lib
+wviewd_te923_LDADD     = -lusb-1.0
 endif
+
+if SOLARIS
+wviewd_te923_SOURCES   += $(top_srcdir)/stations/common/hidapi-solaris.c
+wviewd_te923_LDFLAGS   = -L$(prefix)/lib -L/usr/lib -L/usr/local/lib
+wviewd_te923_LDADD     = -lusb
+endif
+

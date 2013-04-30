@@ -52,15 +52,26 @@ wviewd_wh1080_SOURCES     = \
 
 
 if DARWIN
-wviewd_wh1080_SOURCES	+= $(top_srcdir)/stations/common/hidapi-osx.c
-wviewd_wh1080_LDFLAGS	= -L$(prefix)/lib -L/usr/lib -L/usr/local/lib -framework IOKit -framework CoreFoundation
-wviewd_wh1080_LDADD	=
-else
-wviewd_wh1080_SOURCES	+= $(top_srcdir)/stations/common/hidapi-linux.c
-wviewd_wh1080_LDFLAGS	= -L$(prefix)/lib -L/usr/lib -L/usr/local/lib
+wviewd_wh1080_SOURCES   += $(top_srcdir)/stations/common/hidapi-osx.c
+wviewd_wh1080_LDFLAGS   = -L$(prefix)/lib -L/usr/lib -L/usr/local/lib -framework IOKit -framework CoreFoundation
+wviewd_wh1080_LDADD     =
+endif
+
 if FREEBSD
-wviewd_wh1080_LDADD		= -lusb
-else
-wviewd_wh1080_LDADD		= -lusb-1.0
+wviewd_wh1080_SOURCES   += $(top_srcdir)/stations/common/hidapi-linux.c
+wviewd_wh1080_LDFLAGS   = -L$(prefix)/lib -L/usr/lib -L/usr/local/lib
+wviewd_wh1080_LDADD     = -lusb
 endif
+
+if LINUX
+wviewd_wh1080_SOURCES   += $(top_srcdir)/stations/common/hidapi-linux.c
+wviewd_wh1080_LDFLAGS   = -L$(prefix)/lib -L/usr/lib -L/usr/local/lib
+wviewd_wh1080_LDADD     = -lusb-1.0
 endif
+
+if SOLARIS
+wviewd_wh1080_SOURCES   += $(top_srcdir)/stations/common/hidapi-solaris.c
+wviewd_wh1080_LDFLAGS   = -L$(prefix)/lib -L/usr/lib -L/usr/local/lib
+wviewd_wh1080_LDADD     = -lusb
+endif
+

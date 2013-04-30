@@ -54,12 +54,22 @@ if DARWIN
 wviewd_wmrusb_SOURCES	+= $(top_srcdir)/stations/common/hidapi-osx.c
 wviewd_wmrusb_LDFLAGS	= -L$(prefix)/lib -L/usr/lib -L/usr/local/lib -framework IOKit -framework CoreFoundation
 wviewd_wmrusb_LDADD		=
-else
+endif
+
+if FREEBSD
 wviewd_wmrusb_SOURCES	+= $(top_srcdir)/stations/common/hidapi-linux.c
 wviewd_wmrusb_LDFLAGS	= -L$(prefix)/lib -L/usr/lib -L/usr/local/lib
-if FREEBSD
-wviewd_wmrusb_LDADD		= -lusb
-else
-wviewd_wmrusb_LDADD		= -lusb-1.0
+wviewd_wmrusb_LDADD	= -lusb
 endif
+
+if LINUX
+wviewd_wmrusb_SOURCES	+= $(top_srcdir)/stations/common/hidapi-linux.c
+wviewd_wmrusb_LDFLAGS	= -L$(prefix)/lib -L/usr/lib -L/usr/local/lib
+wviewd_wmrusb_LDADD	= -lusb-1.0
+endif
+
+if SOLARIS
+wviewd_wmrusb_SOURCES	+= $(top_srcdir)/stations/common/hidapi-solaris.c
+wviewd_wmrusb_LDFLAGS	= -L$(prefix)/lib -L/usr/lib -L/usr/local/lib
+wviewd_wmrusb_LDADD	= -lusb
 endif
