@@ -40,22 +40,32 @@ case $host_os in
     os_darwin=yes
     os_linux=no
     os_freebsd=no
+    os_solaris=no
     ;;
   freebsd*)
     os_darwin=no
     os_linux=no
     os_freebsd=yes
+    os_solaris=no
+    ;;
+  solaris*)
+    os_darwin=no
+    os_linux=no
+    os_freebsd=no
+    os_solaris=yes
     ;;
   *)
     os_darwin=no
     os_linux=yes
     os_freebsd=no
+    os_solaris=no
     ;;
 esac
 
 AM_CONDITIONAL([DARWIN], [test x$os_darwin = xyes])
 AM_CONDITIONAL([LINUX], [test x$os_linux = xyes])
 AM_CONDITIONAL([FREEBSD], [test x$os_freebsd = xyes])
+AM_CONDITIONAL([SOLARIS], [test x$os_solaris = xyes])
 
 
 # Checks for libraries.
