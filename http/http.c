@@ -190,7 +190,7 @@ static void processWUNDERGROUNDRapid (LOOP_PKT *loopData)
     int                 length = 0;
     char                *serv;
     int                 port;
-    float               rainIN = sensorAccumGetTotal (httpWork.rainAccumulator);
+    float               rainIN = loopData->rainRate; /* FIXME: should be hourRain!! */
     char                version[64];
     
     // format the WUNDERGROUND data
