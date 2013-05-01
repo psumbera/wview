@@ -102,10 +102,10 @@ static int checksum (unsigned char *ptr, int len)
 
 static void decodeRain (unsigned char *ptr)
 {
-    wmrWork.sensorData.rainRate  = 0.01 * ((int)(ptr[1]*255)  + ptr[0]);
-    wmrWork.sensorData.rain1h    = 0.01 * ((int)(ptr[3]*255) + ptr[2]);
-    wmrWork.sensorData.rain24h   = 0.01 * ((int)(ptr[5]*255) + ptr[4]);
-    wmrWork.sensorData.rainAccum = 0.01 * ((int)(ptr[7]*255) + ptr[6]);
+    wmrWork.sensorData.rainRate  = 0.01 * ((int)(ptr[1] << 8) + ptr[0]);
+    wmrWork.sensorData.rain1h    = 0.01 * ((int)(ptr[3] << 8) + ptr[2]);
+    wmrWork.sensorData.rain24h   = 0.01 * ((int)(ptr[5] << 8) + ptr[4]);
+    wmrWork.sensorData.rainAccum = 0.01 * ((int)(ptr[7] << 8) + ptr[6]);
 
     wmrWork.dataRXMask |= WMR_SENSOR_RAIN;
 
