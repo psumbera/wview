@@ -492,7 +492,7 @@ static void storeLoopPkt (WVIEWD_WORK *work, LOOP_PKT *dest, WMR_DATA *src)
 
     if (0 <= src->rainAccum)
     {
-        if (!work->runningFlag)
+        if (ifWorkData->totalRain == 0)
         {
             // just starting, so start with whatever the station reports:
             ifWorkData->totalRain = src->rainAccum;
@@ -817,6 +817,7 @@ int wmrInit (WVIEWD_WORK *work)
     int                 i, length, printCounter;
 
     memset (&wmrWork, 0, sizeof(wmrWork));
+    wmrWork.sensorData.rainAccum = -1;
 
     // Initialize the USB interface:
     if ((*(work->medium.usbhidInit))(&work->medium) != OK)
