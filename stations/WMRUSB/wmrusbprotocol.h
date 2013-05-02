@@ -52,7 +52,13 @@
 #define WMR_PRODUCT_ID              0xca01
 
 
-#define WMR_BUFFER_LENGTH           255
+#define WMR_BUFFER_LENGTH           100
+
+// Buffer length minus size of the biggest possible packet (-1) as such
+// packet could be waiting for its continuing and thus occupying part of
+// the processing buffer (not counting D0_HISTORY packet type).
+#define WMR_BUFFER_WRITE_LENGTH     (WMR_BUFFER_LENGTH-21)
+
 #define WMR_TEMP_SENSOR_COUNT       10
 #define WMR_THREAD_SLEEP            100                 // ms
 #define WMR_PROCESS_TIME_INTERVAL   1000                // 1 second
