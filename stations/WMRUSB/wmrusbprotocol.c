@@ -178,6 +178,9 @@ static void decodeTemp (unsigned char *ptr)
 
         if (sensor == WMR_TEMP_SENSOR_OUT)
         {
+            wmrWork.lastDataRX_Temp[sensor] = radTimeGetSECSinceEpoch();
+            wmrWork.cntDataRX_Temp[sensor]++;
+
             wmrWork.dataRXMask |= WMR_SENSOR_OUT_TEMP;
     
             if (! wmrWork.started)
