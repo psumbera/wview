@@ -109,6 +109,9 @@ static void decodeRain (unsigned char *ptr)
 
     wmrWork.dataRXMask |= WMR_SENSOR_RAIN;
 
+    wmrWork.lastDataRX_Rain = radTimeGetSECSinceEpoch();
+    wmrWork.cntDataRX_Rain++;
+
     if (! wmrWork.started)
     {
         radMsgLog (PRI_MEDIUM, "received RAIN packet...");
@@ -141,6 +144,9 @@ static void decodeWind (unsigned char *ptr)
     wmrWork.sensorData.windDir = (ptr[0] & 0x0F) * 22.5;
 
     wmrWork.dataRXMask |= WMR_SENSOR_WIND;
+
+    wmrWork.lastDataRX_Wind = radTimeGetSECSinceEpoch();
+    wmrWork.cntDataRX_Wind++;
 
     if (! wmrWork.started)
     {
@@ -803,6 +809,78 @@ static void ReaderThread(RAD_THREAD_ID threadId, void* threadData)
     return;
 }
 
+ 
+void sensors_statistics()
+{
+   static int cnt_stats;
+   static int no_wind, no_rain, no_temp[WMR_TEMP_SENSOR_COUNT];
+   static uint32_t last_wind_time;
+   static uint32_t last_rain_time;
+   static uint32_t last_temp_time[WMR_TEMP_SENSOR_COUNT];
+   static uint32_t last_wind_cnt;
+   static uint32_t last_rain_cnt;
+   static uint32_t last_temp_cnt[WMR_TEMP_SENSOR_COUNT];
+   int i;
+   uint32_t timeNow;
+   char buf[128];
+   char buf2[128];
+
+   timeNow = radTimeGetSECSinceEpoch();
+
+   // Generate sensors stats message every hour 
+   if (timeNow % 3600 < cnt_stats) {
+       snprintf(buf, sizeof(buf), "Sensor hourly stats: W=%d R=%d",
+                  wmrWork.cntDataRX_Wind - last_wind_cnt,
+                  wmrWork.cntDataRX_Rain - last_rain_cnt);
+       last_wind_cnt = wmrWork.cntDataRX_Wind;
+       last_rain_cnt = wmrWork.cntDataRX_Rain;
+
+       for (i=0; i<WMR_TEMP_SENSOR_COUNT; i++) {
+          if (wmrWork.cntDataRX_Temp[i]) {
+              snprintf(buf2, sizeof(buf2), " T%d=%d", i,
+                         wmrWork.cntDataRX_Temp[i] - last_temp_cnt[i]);
+              last_temp_cnt[i] = wmrWork.cntDataRX_Temp[i];
+              strncat(buf, buf2, sizeof(buf2));
+          }
+       }
+        
+       radMsgLog (PRI_MEDIUM, buf);
+   }
+   cnt_stats = timeNow % 3600;
+
+   
+#define TIMEOUT 300
+
+   if (timeNow - wmrWork.lastDataRX_Wind >= TIMEOUT && !no_wind) {
+       radMsgLog (PRI_HIGH, "no WIND sensor data");
+       last_wind_time = wmrWork.lastDataRX_Wind; 
+       no_wind = 1;
+   } else if (timeNow - wmrWork.lastDataRX_Wind < TIMEOUT && no_wind ) {
+       radMsgLog (PRI_HIGH, "we have WIND data again (after %ds)", wmrWork.lastDataRX_Wind-last_wind_time); 
+       no_wind = 0;
+   }
+
+   if (timeNow - wmrWork.lastDataRX_Rain >= TIMEOUT && !no_rain && wmrWork.cntDataRX_Rain) {
+       radMsgLog (PRI_HIGH, "no RAIN sensor data");
+       last_rain_time = wmrWork.lastDataRX_Rain; 
+       no_rain = 1;
+   } else if (timeNow - wmrWork.lastDataRX_Rain < TIMEOUT && no_rain ) {
+       radMsgLog (PRI_HIGH, "we have RAIN data again (after %ds)", wmrWork.lastDataRX_Rain-last_rain_time); 
+       no_rain = 0;
+   }
+
+   for (i=0; i<WMR_TEMP_SENSOR_COUNT; i++) {
+       if (wmrWork.cntDataRX_Temp[i] && !no_temp[i] && timeNow - wmrWork.lastDataRX_Temp[i] >= TIMEOUT) {
+           radMsgLog (PRI_HIGH, "no TEMP[%d] sensor data", i);
+           last_temp_time[i] = wmrWork.lastDataRX_Temp[i];
+           no_temp[i] = 1;
+       } else if (no_temp[i] && timeNow - wmrWork.lastDataRX_Temp[i] < 300) {
+           radMsgLog (PRI_HIGH, "we have TEMP[%d] data again (after %ds)", i, wmrWork.lastDataRX_Temp[i]-last_temp_time[i]); 
+           no_temp[i] = 0;
+       }
+   }
+}
+
 ////////////////////////////////////////////////////////////////////////////////
 //////////////////////////////////  A P I  /////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
@@ -996,6 +1074,9 @@ void wmrGetReadings (WVIEWD_WORK *work)
     // populate the LOOP structure:
     ifWorkData->wmrReadings = wmrWork.sensorData;
     storeLoopPkt (work, &work->loopPkt, &ifWorkData->wmrReadings);
+
+    // report offline sensors
+    sensors_statistics();
 
     // indicate the LOOP packet is done
     radProcessEventsSend (NULL, STATION_LOOP_COMPLETE_EVENT, 0);

@@ -163,6 +163,13 @@ typedef struct
     uint32_t            heartBeatCounter;
     uint32_t            lastDataRX;
     uint8_t             dataRXMask;
+    // external sensors statistics
+    uint32_t            lastDataRX_Temp[WMR_TEMP_SENSOR_COUNT];
+    uint32_t            lastDataRX_Rain;
+    uint32_t            lastDataRX_Wind;
+    uint32_t            cntDataRX_Temp[WMR_TEMP_SENSOR_COUNT];
+    uint32_t            cntDataRX_Rain;
+    uint32_t            cntDataRX_Wind;
 } WMR_WORK;
 
 
