@@ -176,7 +176,7 @@ static void decodeTemp (unsigned char *ptr)
         wmrWork.sensorData.temp[sensor]     = temp;
         wmrWork.sensorData.dewpoint[sensor] = dew;
 
-        if (sensor == WMR_TEMP_SENSOR_OUT)
+        if (sensor >= WMR_TEMP_SENSOR_OUT)
         {
             wmrWork.lastDataRX_Temp[sensor] = radTimeGetSECSinceEpoch();
             wmrWork.cntDataRX_Temp[sensor]++;
@@ -434,6 +434,7 @@ static int parseStationData (WVIEWD_WORK *work)
 static void storeLoopPkt (WVIEWD_WORK *work, LOOP_PKT *dest, WMR_DATA *src)
 {
     float               tempfloat;
+    float               low_temp, high_humidity;
     WMR_IF_DATA*        ifWorkData = (WMR_IF_DATA*)work->stationData;
     time_t              nowTime = time(NULL);
     int                 i;
@@ -441,8 +442,20 @@ static void storeLoopPkt (WVIEWD_WORK *work, LOOP_PKT *dest, WMR_DATA *src)
     // Clear optional data:
     stationClearLoopData(work);
 
+    // Find the lowest temperature and the highest humidity from external sensors
+    low_temp = 151; high_humidity = -1;
+    for (i=WMR_TEMP_SENSOR_OUT; i < WMR_TEMP_SENSOR_COUNT; i++) {
+       if (wmrWork.lastDataRX_Temp[i]) {
+           if (src->temp[i] < low_temp)
+               low_temp = src->temp[i];
+           if (src->humidity[i] > high_humidity)
+               high_humidity = src->humidity[i];
+       }
+    }
+    radMsgLog (PRI_MEDIUM, "lowest temp/humdity %f %f", low_temp, high_humidity);
+
     if ((10 < src->pressure && src->pressure < 50) &&
-        (-150 < src->temp[WMR_TEMP_SENSOR_OUT] && src->temp[WMR_TEMP_SENSOR_OUT] < 150))
+        (-150 < low_temp && low_temp < 150))
     {
         // wmr has Station Pressure:
         dest->stationPressure  = src->pressure;
@@ -463,16 +476,14 @@ static void storeLoopPkt (WVIEWD_WORK *work, LOOP_PKT *dest, WMR_DATA *src)
         dest->altimeter                     = tempfloat;
     }
 
-    if (-150 < src->temp[WMR_TEMP_SENSOR_OUT] && 
-        src->temp[WMR_TEMP_SENSOR_OUT] < 150)
+    if (-150 < low_temp && low_temp < 150)
     {
-        dest->outTemp  = src->temp[WMR_TEMP_SENSOR_OUT];
+        dest->outTemp  = low_temp;
     }
 
-    if (0 <= src->humidity[WMR_TEMP_SENSOR_OUT] &&
-        src->humidity[WMR_TEMP_SENSOR_OUT] <= 100)
+    if (0 <= high_humidity && high_humidity <= 100)
     {
-        tempfloat = src->humidity[WMR_TEMP_SENSOR_OUT];
+        tempfloat = high_humidity;
         tempfloat += 0.5;
         dest->outHumidity  = (uint16_t)tempfloat;
     }
@@ -542,12 +553,15 @@ static void storeLoopPkt (WVIEWD_WORK *work, LOOP_PKT *dest, WMR_DATA *src)
 
     dest->UV                            = src->UV;
 
+#if 0
+    // We should allow old behavior via some configuration option.
     // Do the extras:
     for (i = 0; i < WMR_TEMP_SENSOR_COUNT - 2; i ++)
     {
         dest->extraTemp[i]      = src->temp[i+2];
         dest->extraHumidity[i]  = src->humidity[i+2];
     }
+#endif
 
     return;
 }
