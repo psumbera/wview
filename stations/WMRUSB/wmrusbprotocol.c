@@ -986,6 +986,10 @@ void wmrExit (WVIEWD_WORK *work)
 // Read raw USB data and buffer it for later processing:
 void wmrReadData (WVIEWD_WORK *work, WMRUSB_MSG_DATA* msg)
 {
+    if (wmrWork.readIndex >= WMR_BUFFER_LENGTH - WMR_BUFFER_WRITE_LENGTH) {
+       radMsgLog (PRI_HIGH, "Potential buffer overrun - data thrown away (readIndex=%d; msglen=%d)",
+                  wmrWork.readIndex, msg->length);
+    }
     memcpy(&wmrWork.readData[wmrWork.readIndex], msg->data, msg->length);
     wmrWork.readIndex += msg->length;
 

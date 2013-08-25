@@ -61,7 +61,7 @@
 
 #define WMR_TEMP_SENSOR_COUNT       10
 #define WMR_THREAD_SLEEP            100                 // ms
-#define WMR_PROCESS_TIME_INTERVAL   1000                // 1 second
+#define WMR_PROCESS_TIME_INTERVAL   500                 // .5 second
 #define WMR_HEARTBEAT_INTERVAL      25                  // seconds
 
 
