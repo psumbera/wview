@@ -452,7 +452,6 @@ static void storeLoopPkt (WVIEWD_WORK *work, LOOP_PKT *dest, WMR_DATA *src)
                high_humidity = src->humidity[i];
        }
     }
-    radMsgLog (PRI_MEDIUM, "lowest temp/humdity %f %f", low_temp, high_humidity);
 
     if ((10 < src->pressure && src->pressure < 50) &&
         (-150 < low_temp && low_temp < 150))
