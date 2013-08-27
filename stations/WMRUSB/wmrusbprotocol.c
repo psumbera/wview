@@ -1027,6 +1027,7 @@ void wmrReadData (WVIEWD_WORK *work, WMRUSB_MSG_DATA* msg)
     if (wmrWork.readIndex >= WMR_BUFFER_LENGTH - WMR_BUFFER_WRITE_LENGTH) {
        radMsgLog (PRI_HIGH, "Potential buffer overrun - data thrown away (readIndex=%d; msglen=%d)",
                   wmrWork.readIndex, msg->length);
+       return;
     }
     memcpy(&wmrWork.readData[wmrWork.readIndex], msg->data, msg->length);
     wmrWork.readIndex += msg->length;
