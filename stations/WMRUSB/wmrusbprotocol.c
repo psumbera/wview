@@ -158,6 +158,9 @@ static void decodeTemp (unsigned char *ptr)
 {
     unsigned int    sensor = ptr[0] & 0x0F;
     float           humid, temp, dew;
+#ifdef WMR_TEMP_MULTIPLE
+    static int      mask_init = 0;
+#endif
 
     if (sensor < WMR_TEMP_SENSOR_COUNT)
     {
@@ -176,11 +179,24 @@ static void decodeTemp (unsigned char *ptr)
         wmrWork.sensorData.temp[sensor]     = temp;
         wmrWork.sensorData.dewpoint[sensor] = dew;
 
+#ifdef WMR_TEMP_MULTIPLE
         if (sensor >= WMR_TEMP_SENSOR_OUT)
+#else
+        if (sensor == WMR_TEMP_SENSOR_OUT)
+#endif
         {
             wmrWork.lastDataRX_Temp[sensor] = radTimeGetSECSinceEpoch();
             wmrWork.cntDataRX_Temp[sensor]++;
 
+#ifdef WMR_TEMP_MULTIPLE
+            // When we are expected to obtain external temperature from multiple
+            // sensors we will wait for at least two data packets before we proceed
+            // with initialization.
+            if (mask_init == 0) {
+                mask_init++;
+                return;
+            }
+#endif
             wmrWork.dataRXMask |= WMR_SENSOR_OUT_TEMP;
     
             if (! wmrWork.started)
@@ -434,7 +450,7 @@ static int parseStationData (WVIEWD_WORK *work)
 static void storeLoopPkt (WVIEWD_WORK *work, LOOP_PKT *dest, WMR_DATA *src)
 {
     float               tempfloat;
-    float               low_temp, high_humidity;
+    float               temperature, humidity;
     WMR_IF_DATA*        ifWorkData = (WMR_IF_DATA*)work->stationData;
     time_t              nowTime = time(NULL);
     int                 i;
@@ -442,19 +458,24 @@ static void storeLoopPkt (WVIEWD_WORK *work, LOOP_PKT *dest, WMR_DATA *src)
     // Clear optional data:
     stationClearLoopData(work);
 
+#ifdef WMR_TEMP_MULTIPLE
     // Find the lowest temperature and the highest humidity from external sensors
-    low_temp = 151; high_humidity = -1;
+    temperature = 151; humidity = -1;
     for (i=WMR_TEMP_SENSOR_OUT; i < WMR_TEMP_SENSOR_COUNT; i++) {
-       if (wmrWork.lastDataRX_Temp[i]) {
-           if (src->temp[i] < low_temp)
-               low_temp = src->temp[i];
-           if (src->humidity[i] > high_humidity)
-               high_humidity = src->humidity[i];
-       }
+        if (wmrWork.lastDataRX_Temp[i]) {
+            if (src->temp[i] < temperature)
+                temperature = src->temp[i];
+            if (src->humidity[i] > humidity)
+                humidity = src->humidity[i];
+        }
     }
+#else
+    temperature = src->temp[WMR_TEMP_SENSOR_OUT];
+    humidity = src->humidity[WMR_TEMP_SENSOR_OUT];
+#endif
 
     if ((10 < src->pressure && src->pressure < 50) &&
-        (-150 < low_temp && low_temp < 150))
+        (-150 < temperature && temperature < 150))
     {
         // wmr has Station Pressure:
         dest->stationPressure  = src->pressure;
@@ -475,14 +496,14 @@ static void storeLoopPkt (WVIEWD_WORK *work, LOOP_PKT *dest, WMR_DATA *src)
         dest->altimeter                     = tempfloat;
     }
 
-    if (-150 < low_temp && low_temp < 150)
+    if (-150 < temperature && temperature < 150)
     {
-        dest->outTemp  = low_temp;
+        dest->outTemp  = temperature;
     }
 
-    if (0 <= high_humidity && high_humidity <= 100)
+    if (0 <= humidity && humidity <= 100)
     {
-        tempfloat = high_humidity;
+        tempfloat = humidity;
         tempfloat += 0.5;
         dest->outHumidity  = (uint16_t)tempfloat;
     }
@@ -552,8 +573,7 @@ static void storeLoopPkt (WVIEWD_WORK *work, LOOP_PKT *dest, WMR_DATA *src)
 
     dest->UV                            = src->UV;
 
-#if 0
-    // We should allow old behavior via some configuration option.
+#ifndef  WMR_TEMP_MULTIPLE
     // Do the extras:
     for (i = 0; i < WMR_TEMP_SENSOR_COUNT - 2; i ++)
     {
@@ -909,6 +929,11 @@ int wmrInit (WVIEWD_WORK *work)
     unsigned char       buf[32];
     char                outString[128];
     int                 i, length, printCounter;
+
+#ifdef WMR_TEMP_MULTIPLE
+    radMsgLog (PRI_MEDIUM, 
+        "version built to obtain temperature from multiple sensors");
+#endif
 
     memset (&wmrWork, 0, sizeof(wmrWork));
     wmrWork.sensorData.rainAccum = -1;

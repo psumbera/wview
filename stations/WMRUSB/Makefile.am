@@ -11,7 +11,8 @@ INCLUDES = \
 		-D_GNU_SOURCE \
 		-DWV_CONFIG_DIR=\"$(sysconfdir)/wview\" \
 		-DWV_RUN_DIR=\"$(localstatedir)/wview\" \
-		-DBUILD_WVIEWD
+		-DBUILD_WVIEWD \
+		-DWMR_TEMP_MULTIPLE
 
 # define the sources
 wviewd_wmrusb_SOURCES     = \
